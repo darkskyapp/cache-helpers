@@ -37,3 +37,13 @@ the Dark Sky API.
 
     (Like `once`, this function is smart enough to not call the backing
     function more often than necessary.)
+
+*   `cache.sizeBasedKeyValue`: Similar to the others. Takes a function and a
+    maximum cache size. The passed function is expected to take a key parameter
+    and a callback. The function returned by this method will take the same.
+
+    If the cache gets full and a new item is requested, the least-recently-used
+    item is purged.
+
+    (Like the other functions, this function is also smart enough to not call
+    the backing function more often than necessary.)
