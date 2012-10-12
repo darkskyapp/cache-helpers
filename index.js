@@ -74,3 +74,49 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
     })
   }
 }
+
+exports.sizeBasedKeyValue = function(func, size) {
+  var cache     = [],
+      callbacks = {}
+
+  size += size
+
+  return function(key, callback) {
+    /* Look up in the cache. */
+    var i
+
+    for(i = 0; i !== cache.length; i += 2)
+      if(cache[i] === key) {
+        if(i !== 0)
+          Array.prototype.unshift.apply(cache, cache.splice(i, 2))
+
+        return callback(null, cache[1])
+      }
+
+    /* Somebody else is already polling the backend. Get notified when they're
+     * done, and bail. */
+    if(callbacks[key]) {
+      callbacks[key].push(callback)
+      return
+    }
+
+    callbacks[key] = [callback]
+
+    /* Call the backing store. */
+    return func(key, function(err, value) {
+      /* Successful result? Then add it to the cache. */
+      if(!err) {
+        if(cache.length === size)
+          cache.length -= 2
+
+        cache.unshift(key, value)
+      }
+
+      /* Notify all the saved callbacks, and then clean up. */
+      while(callbacks[key].length)
+        callbacks[key].pop()(err, value)
+
+      delete callbacks[key]
+    })
+  }
+}
