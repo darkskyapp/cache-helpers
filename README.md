@@ -1,21 +1,21 @@
-Cache
-=====
+cache-helpers
+=============
 
-`cache` is a Node.JS module containing several generic caching functions. It
-was written as a way of abstracting out a number of commonly used patterns in
-the Dark Sky API.
+`cache-helpers` is a Node.JS module containing several generic caching
+functions. It was written as a way of abstracting out a number of commonly used
+patterns in the [Dark Sky API](http://developer.darkskyapp.com/).
 
-*   `cache.once`: Takes a (presumably expensive) function which takes a single
-    callback and calls it with an optional error argument and a data argument.
-    It returns a function that you may use as a proxy for the passed function.
-    The first time it is called, it will call the function and cache it's data.
-    Subsequent calls will return the cached data.
+*   `cacheHelpers.once`: Takes a (presumably expensive) function which takes a
+    single callback and calls it with an optional error argument and a data
+    argument. It returns a function that you may use as a proxy for the passed
+    function. The first time it is called, it will call the function and cache
+    its data. Subsequent calls will return the cached data.
 
     (It is smart enough to only call the backing function once even if it is
     called many times simultaneously.)
 
-*   `cache.timeBasedWithGrace`: Takes a (presumably expensive) function, like
-    `once`, above, and two numbers: a soft cache timeout and a hard cache
+*   `cacheHelpers.timeBasedWithGrace`: Takes a (presumably expensive) function,
+    like `once`, above, and two numbers: a soft cache timeout and a hard cache
     timeout. These timeouts may be in any arbitrary units you prefer, though
     either seconds or milliseconds is most convenient. Like `once`, it returns
     a proxy function, which is called with the current time (in whatever units
@@ -38,12 +38,16 @@ the Dark Sky API.
     (Like `once`, this function is smart enough to not call the backing
     function more often than necessary.)
 
-*   `cache.sizeBasedKeyValue`: Similar to the others. Takes a function and a
-    maximum cache size. The passed function is expected to take a key parameter
-    and a callback. The function returned by this method will take the same.
+*   `cacheHelpers.sizeBasedKeyValue`: Similar to the others. Takes a function
+    and a maximum cache size. The passed function is expected to take a key
+    parameter and a callback. The function returned by this method will take
+    the same.
 
     If the cache gets full and a new item is requested, the least-recently-used
     item is purged.
 
     (Like the other functions, this function is also smart enough to not call
     the backing function more often than necessary.)
+
+These are kind of advanced, and may be fairly hard to understand without a
+concrete use case. Checking out the tests may help.
