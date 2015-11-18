@@ -1,29 +1,38 @@
 exports.once = function(func) {
-  var cache     = undefined,
-      callbacks = null
+  var f, handler;
+
+  handler = function(callback) {
+    var list;
+
+    list = [callback];
+
+    f = function(callback) {
+      list.push(callback);
+    };
+
+    func(function(err, result) {
+      var i;
+
+      f = err?
+            handler:
+            function(callback) {
+              process.nextTick(function() {
+                callback(err, result);
+              });
+            };
+
+      for(i = 0; i < list.length; i++) {
+        list[i](err, result);
+      }
+    });
+  };
+
+  f = handler;
 
   return function(callback) {
-    if(cache !== undefined)
-      return callback(null, cache)
-
-    if(callbacks) {
-      callbacks.push(callback)
-      return
-    }
-
-    callbacks = [callback]
-
-    return func(function(err, data) {
-      if(!err)
-        cache = data
-
-      while(callbacks.length)
-        callbacks.pop()(err, data)
-
-      callbacks = null
-    })
-  }
-}
+    f(callback);
+  };
+};
 
 /* FIXME: why have an inProgress field? just set callbacks to null initially
  * have it be an array only when we're in progress... */
