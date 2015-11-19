@@ -104,6 +104,80 @@ describe("cache", function() {
       });
     });
 
+    it("should only call the callback once if called multiple times " +
+       "simultaneously", function(done) {
+      var cinc, m;
+
+      cinc = cache.timeBasedWithGrace(inc, 100, 1000),
+      m = 0;
+
+      cinc(0, function(err, n) {
+        assert.ifError(err);
+        assert.strictEqual(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+
+      cinc(0, function(err, n) {
+        assert.ifError(err);
+        assert.strictEqual(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+
+      cinc(0, function(err, n) {
+        assert.ifError(err);
+        assert.strictEqual(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+    });
+
+    it("should only call the callback once if called multiple times " +
+       "simultaneously in soft timeout state", function(done) {
+      var cinc;
+
+      cinc = cache.timeBasedWithGrace(inc, 100, 1000),
+
+      cinc(0, function(err, n) {
+        var m;
+
+        assert.ifError(err);
+        assert.strictEqual(n, 0);
+
+        m = 0;
+
+        cinc(200, function(err, n) {
+          assert.ifError(err);
+          assert.strictEqual(n, 0);
+          if(++m === 3) {
+            done(null);
+          }
+        });
+
+        /* We assume that by the time this gets executed, the background update
+         * succeeded... */
+        cinc(200, function(err, n) {
+          assert.ifError(err);
+          assert.strictEqual(n, 1);
+          if(++m === 3) {
+            done(null);
+          }
+        });
+
+        cinc(200, function(err, n) {
+          assert.ifError(err);
+          assert.strictEqual(n, 1);
+          if(++m === 3) {
+            done(null);
+          }
+        });
+      });
+    });
+
     /* FIXME: Ensure that calling the function a bajillion times causes each
      * callback to get called. */
   });

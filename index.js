@@ -128,9 +128,11 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
 };
 
 exports.sizeBasedKeyValue = function(func, size) {
-  console.warn(
-    "cacheHelpers.sizeBasedKeyValue is DEPRECATED and will be removed"
-  );
+  if(process.env["NODE_ENV"] !== "test") {
+    console.warn(
+      "cacheHelpers.sizeBasedKeyValue is DEPRECATED and will be removed"
+    );
+  }
 
   var cache     = [],
       callbacks = {}
