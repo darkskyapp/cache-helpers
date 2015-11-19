@@ -34,55 +34,98 @@ exports.once = function(func) {
   };
 };
 
-/* FIXME: why have an inProgress field? just set callbacks to null initially
- * have it be an array only when we're in progress... */
 exports.timeBasedWithGrace = function(func, soft, hard) {
-  var cache      = undefined,
-      softLimit  = 0,
-      hardLimit  = 0,
-      inProgress = false,
-      callbacks  = []
+  var f, handler;
 
-  return function(now, callback) {
-    /* If we're before the hardlimit, just call the callback immediately with
-     * cached data. Otherwise, if we're after it, we'll have to defer the
-     * callback until later on. */
-    if(now < hardLimit)
-      callback(null, cache)
+  /* "Hard" handler. */
+  handler = function(time, callback) {
+    var list;
 
-    else
-      callbacks.push(callback)
+    list = [callback];
 
-    /* If there's nothing more to do (because we're before the soft limit or
-     * because somebody else is already doing it), check out. */
-    if(now < softLimit || inProgress)
-      return
+    f = function(time, callback) {
+      list.push(callback);
+    };
 
-    /* Okay, so no we have to update the cache. Mark that we're doing something
-     * so that nobody else tries to. */
-    inProgress = true
+    func(function(err, result) {
+      var hard_time, i, sandler, soft_time;
 
-    /* Call the backing function. */
-    return func(function(err, data) {
-      /* If nothing went wrong, update the cache and timeouts. */
-      if(!err) {
-        cache     = data
-        softLimit = now + soft
-        hardLimit = now + hard
+      if(err) {
+        f = handler;
       }
 
-      /* Call each of the callbacks that we buffered up. (We just pass `err` to
-       * them because if there was no error, it's just going to be null anyway.
-       * Vice-versa applies as well.) */
-      while(callbacks.length)
-        callbacks.pop()(err, data)
+      else {
+        soft_time = time + soft;
+        hard_time = time + hard;
 
-      /* Finally, the last thing we do is mark that we're no longer in
-       * progress, since we just finished. */
-      inProgress = false
-    })
-  }
-}
+        sandler = function(time, callback) {
+          var list;
+
+          if(time >= hard_time) {
+            handler(time, callback);
+          }
+
+          else {
+            if(time >= soft_time) {
+              list = null;
+
+              f = function(time, callback) {
+                if(time >= hard_time) {
+                  if(!list) {
+                    list = [];
+                  }
+
+                  list.push(callback);
+                }
+
+                else {
+                  process.nextTick(function() {
+                    callback(err, result);
+                  });
+                }
+              };
+
+              func(function(new_err, new_result) {
+                var i;
+
+                if(!new_err) {
+                  err       = new_err;
+                  result    = new_result;
+                  soft_time = time + soft;
+                  hard_time = time + hard;
+                }
+
+                f = sandler;
+
+                if(list) {
+                  for(i = 0; i < list.length; i++) {
+                    list[i](err, result);
+                  }
+                }
+              });
+            }
+
+            process.nextTick(function() {
+              callback(err, result);
+            });
+          }
+        };
+
+        f = sandler;
+      }
+
+      for(i = 0; i < list.length; i++) {
+        list[i](err, result);
+      }
+    });
+  };
+
+  f = handler;
+
+  return function(time, callback) {
+    f(time, callback);
+  };
+};
 
 exports.sizeBasedKeyValue = function(func, size) {
   var cache     = [],

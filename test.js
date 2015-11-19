@@ -69,39 +69,46 @@ describe("cache", function() {
     });
 
     describe("timeBasedWithGrace", function() {
-      it("should only update the cache as appropriate", function() {
-        var cinc = cache.timeBasedWithGrace(inc, 100, 1000)
+      it("should only update the cache as appropriate", function(done) {
+        var cinc = cache.timeBasedWithGrace(inc, 100, 1000);
 
         /* First datapoint. */
         cinc(0, function(err, n) {
-          assert.deepEqual(n, 0)
-        })
+          assert.ifError(err);
+          assert.deepEqual(n, 0);
 
-        /* Read cached. */
-        cinc(50, function(err, n) {
-          assert.deepEqual(n, 0)
-        })
+          /* Read cached. */
+          cinc(50, function(err, n) {
+            assert.ifError(err);
+            assert.deepEqual(n, 0);
 
-        /* Soft timeout: return cached but update in the background. */
-        cinc(200, function(err, n) {
-          assert.deepEqual(n, 0)
-        })
+            /* Soft timeout: return cached but update in the background. */
+            cinc(200, function(err, n) {
+              assert.ifError(err);
+              assert.deepEqual(n, 0);
 
-        /* Read cached. */
-        cinc(250, function(err, n) {
-          assert.deepEqual(n, 1)
-        })
+              /* Read cached. */
+              cinc(210, function(err, n) {
+                assert.ifError(err);
+                assert.deepEqual(n, 1);
 
-        /* Hard timeout: update n before returning. */
-        cinc(2500, function(err, n) {
-          assert.deepEqual(n, 2)
-        })
-      })
+                /* Hard timeout: update n before returning. */
+                cinc(2500, function(err, n) {
+                  assert.ifError(err);
+                  assert.deepEqual(n, 2);
+
+                  done(null);
+                });
+              });
+            });
+          });
+        });
+      });
 
       /* FIXME: Ensure that calling the function a bajillion times causes each
        * callback to get called. */
-    })
-  })
+    });
+  });
 
   describe("key-value", function() {
     var n
