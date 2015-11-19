@@ -66,6 +66,10 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
           }
 
           else {
+            process.nextTick(function() {
+              callback(err, result);
+            });
+
             if(time >= soft_time) {
               list = null;
 
@@ -104,10 +108,6 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
                 }
               });
             }
-
-            process.nextTick(function() {
-              callback(err, result);
-            });
           }
         };
 
@@ -128,6 +128,10 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
 };
 
 exports.sizeBasedKeyValue = function(func, size) {
+  console.warn(
+    "cacheHelpers.sizeBasedKeyValue is DEPRECATED and will be removed"
+  );
+
   var cache     = [],
       callbacks = {}
 

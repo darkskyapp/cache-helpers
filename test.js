@@ -5,109 +5,107 @@ assert = require("assert");
 cache  = require("./");
 
 describe("cache", function() {
-  describe("time-based", function() {
-    var inc, n;
+  var inc, n;
 
-    inc = function(callback) {
-      process.nextTick(function() {
-        callback(null, n++);
-      });
-    };
-
-    beforeEach(function() {
-      n = 0;
+  inc = function(callback) {
+    process.nextTick(function() {
+      callback(null, n++);
     });
+  };
 
-    describe("once", function() {
-      it("should only call the backing cache function once", function(done) {
-        var cinc = cache.once(inc);
+  beforeEach(function() {
+    n = 0;
+  });
 
+  describe("once", function() {
+    it("should only call the backing cache function once", function(done) {
+      var cinc = cache.once(inc);
+
+      cinc(function(err, n) {
+        assert.ifError(err);
+        assert.equal(n, 0);
         cinc(function(err, n) {
           assert.ifError(err);
           assert.equal(n, 0);
           cinc(function(err, n) {
             assert.ifError(err);
             assert.equal(n, 0);
-            cinc(function(err, n) {
-              assert.ifError(err);
-              assert.equal(n, 0);
-              done(null);
-            });
+            done(null);
           });
-        });
-      });
-
-      it("should call the backing cache function once even if simultaneous " +
-         "calls are made", function(done) {
-        var cinc = cache.once(inc),
-            m = 0;
-
-        cinc(function(err, n) {
-          assert.ifError(err);
-          assert.equal(n, 0);
-          if(++m === 3) {
-            done(null);
-          }
-        });
-
-        cinc(function(err, n) {
-          assert.ifError(err);
-          assert.equal(n, 0);
-          if(++m === 3) {
-            done(null);
-          }
-        });
-
-        cinc(function(err, n) {
-          assert.ifError(err);
-          assert.equal(n, 0);
-          if(++m === 3) {
-            done(null);
-          }
         });
       });
     });
 
-    describe("timeBasedWithGrace", function() {
-      it("should only update the cache as appropriate", function(done) {
-        var cinc = cache.timeBasedWithGrace(inc, 100, 1000);
+    it("should call the backing cache function once even if simultaneous " +
+       "calls are made", function(done) {
+      var cinc = cache.once(inc),
+          m = 0;
 
-        /* First datapoint. */
-        cinc(0, function(err, n) {
+      cinc(function(err, n) {
+        assert.ifError(err);
+        assert.equal(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+
+      cinc(function(err, n) {
+        assert.ifError(err);
+        assert.equal(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+
+      cinc(function(err, n) {
+        assert.ifError(err);
+        assert.equal(n, 0);
+        if(++m === 3) {
+          done(null);
+        }
+      });
+    });
+  });
+
+  describe("timeBasedWithGrace", function() {
+    it("should only update the cache as appropriate", function(done) {
+      var cinc = cache.timeBasedWithGrace(inc, 100, 1000);
+
+      /* First datapoint. */
+      cinc(0, function(err, n) {
+        assert.ifError(err);
+        assert.deepEqual(n, 0);
+
+        /* Read cached. */
+        cinc(50, function(err, n) {
           assert.ifError(err);
           assert.deepEqual(n, 0);
 
-          /* Read cached. */
-          cinc(50, function(err, n) {
+          /* Soft timeout: return cached but update in the background. */
+          cinc(200, function(err, n) {
             assert.ifError(err);
             assert.deepEqual(n, 0);
 
-            /* Soft timeout: return cached but update in the background. */
-            cinc(200, function(err, n) {
+            /* Read cached. */
+            cinc(210, function(err, n) {
               assert.ifError(err);
-              assert.deepEqual(n, 0);
+              assert.deepEqual(n, 1);
 
-              /* Read cached. */
-              cinc(210, function(err, n) {
+              /* Hard timeout: update n before returning. */
+              cinc(2500, function(err, n) {
                 assert.ifError(err);
-                assert.deepEqual(n, 1);
+                assert.deepEqual(n, 2);
 
-                /* Hard timeout: update n before returning. */
-                cinc(2500, function(err, n) {
-                  assert.ifError(err);
-                  assert.deepEqual(n, 2);
-
-                  done(null);
-                });
+                done(null);
               });
             });
           });
         });
       });
-
-      /* FIXME: Ensure that calling the function a bajillion times causes each
-       * callback to get called. */
     });
+
+    /* FIXME: Ensure that calling the function a bajillion times causes each
+     * callback to get called. */
   });
 
   describe("key-value", function() {
