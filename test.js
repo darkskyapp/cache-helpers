@@ -108,60 +108,71 @@ describe("cache", function() {
      * callback to get called. */
   });
 
-  describe("key-value", function() {
-    var n
+  describe("sizeBasedKeyValue", function() {
+    var inc, n;
 
-    function inc(key, callback) {
-      return callback(null, key ^ n++)
-    }
+    inc = function(key, callback) {
+      process.nextTick(function() {
+        callback(null, key ^ n++);
+      });
+    };
 
     beforeEach(function() {
-      n = 0
-    })
+      n = 0;
+    });
 
-    describe("sizeBasedKeyValue", function() {
-      it("should cache for each key, until you fill the space", function() {
-        var f = cache.sizeBasedKeyValue(inc, 2)
+    it("should cache for each key, until you fill the space", function() {
+      var f = cache.sizeBasedKeyValue(inc, 2);
 
-        f(20, function(err, value) {
-          assert.equal(value, 20)
-        })
-
-        f(20, function(err, value) {
-          assert.equal(value, 20)
-        })
-
-        f(40, function(err, value) {
-          assert.equal(value, 41)
-        })
+      f(20, function(err, value) {
+        assert.ifError(err);
+        assert.equal(value, 20);
 
         f(20, function(err, value) {
-          assert.equal(value, 20)
-        })
+          assert.ifError(err);
+          assert.equal(value, 20);
 
-        f(40, function(err, value) {
-          assert.equal(value, 41)
-        })
+          f(40, function(err, value) {
+            assert.ifError(err);
+            assert.equal(value, 41);
 
-        f(30, function(err, value) {
-          assert.equal(value, 28)
-        })
+            f(20, function(err, value) {
+              assert.ifError(err);
+              assert.equal(value, 20);
 
-        f(40, function(err, value) {
-          assert.equal(value, 41)
-        })
+              f(40, function(err, value) {
+                assert.ifError(err);
+                assert.equal(value, 41);
 
-        f(20, function(err, value) {
-          assert.equal(value, 23)
-        })
+                f(30, function(err, value) {
+                  assert.ifError(err);
+                  assert.equal(value, 28);
 
-        f(40, function(err, value) {
-          assert.equal(value, 41)
-        })
-      })
+                  f(40, function(err, value) {
+                    assert.ifError(err);
+                    assert.equal(value, 41);
 
-      /* FIXME: Ensure that calling the function a bajillion times causes each
-       * callback to get called. */
-    })
-  })
-})
+                    f(20, function(err, value) {
+                      assert.ifError(err);
+                      assert.equal(value, 23);
+
+                      f(40, function(err, value) {
+                        assert.ifError(err);
+                        assert.equal(value, 41);
+
+                        done(null);
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    /* FIXME: Ensure that calling the function a bajillion times causes each
+     * callback to get called. */
+  });
+});
