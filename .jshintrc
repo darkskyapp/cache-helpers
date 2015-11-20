@@ -1,0 +1,20 @@
+{
+  "curly": true,
+  "esnext": true,
+  "eqeqeq": true,
+  "forin": true,
+  "freeze": true,
+  "futurehostile": true,
+  "latedef": true,
+  "maxlen": 79,
+  "mocha": true,
+  "noarg": true,
+  "nocomma": true,
+  "node": true,
+  "nonbsp": true,
+  "nonew": true,
+  "sub": true,
+  "strict": true,
+  "undef": true,
+  "unused": "vars"
+}

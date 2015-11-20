@@ -108,7 +108,7 @@ describe("cache", function() {
        "simultaneously", function(done) {
       var cinc, m;
 
-      cinc = cache.timeBasedWithGrace(inc, 100, 1000),
+      cinc = cache.timeBasedWithGrace(inc, 100, 1000);
       m = 0;
 
       cinc(0, function(err, n) {
@@ -140,7 +140,7 @@ describe("cache", function() {
        "simultaneously in soft timeout state", function(done) {
       var cinc;
 
-      cinc = cache.timeBasedWithGrace(inc, 100, 1000),
+      cinc = cache.timeBasedWithGrace(inc, 100, 1000);
 
       cinc(0, function(err, n) {
         var m;
@@ -195,7 +195,7 @@ describe("cache", function() {
       n = 0;
     });
 
-    it("should cache for each key, until you fill the space", function() {
+    it("should cache for each key, until you fill the space", function(done) {
       var f = cache.sizeBasedKeyValue(inc, 2);
 
       f(20, function(err, value) {
