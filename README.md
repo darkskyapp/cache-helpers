@@ -38,17 +38,6 @@ patterns in the [Dark Sky API](http://developer.darkskyapp.com/).
     (Like `once`, this function is smart enough to not call the backing
     function more often than necessary.)
 
-*   `cacheHelpers.sizeBasedKeyValue`: Similar to the others. Takes a function
-    and a maximum cache size. The passed function is expected to take a key
-    parameter and a callback. The function returned by this method will take
-    the same.
-
-    If the cache gets full and a new item is requested, the least-recently-used
-    item is purged.
-
-    (Like the other functions, this function is also smart enough to not call
-    the backing function more often than necessary.)
-
 These are kind of advanced, and may be fairly hard to understand without a
 concrete use case. Checking out the tests may help.
 
@@ -56,7 +45,7 @@ concrete use case. Checking out the tests may help.
 License
 -------
 
-To the extend possible by law, The Dark Sky Company, LLC has [waived all
+To the extent possible by law, The Dark Sky Company, LLC has [waived all
 copyright and related or neighboring rights][cc0] to this library.
 
 [cc0]: http://creativecommons.org/publicdomain/zero/1.0/
