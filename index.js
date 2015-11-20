@@ -1,131 +1,134 @@
 "use strict";
 
 exports.once = function(func) {
-  var f, handler;
+  var err, handler, list, result, state;
 
-  handler = function(callback) {
-    var list;
+  state  = 0;
+  list   = null;
+  err    = undefined;
+  result = undefined;
 
-    list = [callback];
+  handler = function(new_err, new_result) {
+    var callbacks, i;
 
-    f = function(callback) {
-      list.push(callback);
-    };
+    callbacks = list;
 
-    func(function(err, result) {
-      var i;
+    state  = new_err? 0: 2;
+    list   = null;
+    err    = new_err;
+    result = new_result;
 
-      f = err?
-            handler:
-            function(callback) {
-              process.nextTick(function() {
-                callback(err, result);
-              });
-            };
-
-      for(i = 0; i < list.length; i++) {
-        list[i](err, result);
+    if(callbacks) {
+      for(i = 0; i < callbacks.length; i++) {
+        callbacks[i](new_err, new_result);
       }
-    });
+    }
   };
 
-  f = handler;
-
   return function(callback) {
-    f(callback);
+    switch(state) {
+      case 0:
+        state = 1;
+        list  = [callback];
+
+        func(handler);
+        break;
+
+      case 1:
+        list.push(callback);
+        break;
+
+      case 2:
+        process.nextTick(function() {
+          callback(err, result);
+        });
+        break;
+    }
   };
 };
 
 exports.timeBasedWithGrace = function(func, soft, hard) {
-  var f, handler;
+  var err, hard_timeout, list, result, soft_timeout, state;
 
-  /* "Hard" handler. */
-  handler = function(time, callback) {
-    var list;
-
-    list = [callback];
-
-    f = function(time, callback) {
-      list.push(callback);
-    };
-
-    func(function(err, result) {
-      var hard_time, i, sandler, soft_time;
-
-      if(err) {
-        f = handler;
-      }
-
-      else {
-        soft_time = time + soft;
-        hard_time = time + hard;
-
-        sandler = function(time, callback) {
-          var list;
-
-          if(time >= hard_time) {
-            handler(time, callback);
-          }
-
-          else {
-            process.nextTick(function() {
-              callback(err, result);
-            });
-
-            if(time >= soft_time) {
-              list = null;
-
-              f = function(time, callback) {
-                if(time >= hard_time) {
-                  if(!list) {
-                    list = [];
-                  }
-
-                  list.push(callback);
-                }
-
-                else {
-                  process.nextTick(function() {
-                    callback(err, result);
-                  });
-                }
-              };
-
-              func(function(new_err, new_result) {
-                var i;
-
-                if(!new_err) {
-                  err       = new_err;
-                  result    = new_result;
-                  soft_time = time + soft;
-                  hard_time = time + hard;
-                }
-
-                f = sandler;
-
-                if(list) {
-                  for(i = 0; i < list.length; i++) {
-                    list[i](new_err, new_result);
-                  }
-                }
-              });
-            }
-          }
-        };
-
-        f = sandler;
-      }
-
-      for(i = 0; i < list.length; i++) {
-        list[i](err, result);
-      }
-    });
-  };
-
-  f = handler;
+  state        = 0;
+  list         = null;
+  soft_timeout = NaN;
+  hard_timeout = NaN;
+  err          = undefined;
+  result       = undefined;
 
   return function(time, callback) {
-    f(time, callback);
+    var update;
+
+    update = false;
+
+    switch(state) {
+      case 0:
+        state  = 1;
+        list   = [callback];
+        update = true;
+        break;
+
+      case 1:
+        list.push(callback);
+        break;
+
+      case 2:
+        if(time >= hard_timeout) {
+          state  = 1;
+          list   = [callback];
+          update = true;
+        }
+
+        else {
+          process.nextTick(function() {
+            callback(err, result);
+          });
+
+          if(time >= soft_timeout) {
+            state  = 3;
+            update = true;
+          }
+        }
+        break;
+
+      case 3:
+        if(time >= hard_timeout) {
+          if(!list) {
+            list = [];
+          }
+
+          list.push(callback);
+        }
+
+        else {
+          process.nextTick(function() {
+            callback(err, result);
+          });
+        }
+        break;
+    }
+
+    if(update) {
+      func(function(new_err, new_result) {
+        var callbacks, i;
+
+        callbacks = list;
+
+        state        = new_err? (state - 1): 2;
+        list         = null;
+        soft_timeout = time + soft;
+        hard_timeout = time + hard;
+        err          = new_err;
+        result       = new_result;
+
+        if(callbacks) {
+          for(i = 0; i < callbacks.length; i++) {
+            callbacks[i](new_err, new_result);
+          }
+        }
+      });
+    }
   };
 };
 
