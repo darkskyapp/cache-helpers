@@ -105,7 +105,7 @@ exports.timeBasedWithGrace = function(func, soft, hard) {
 
                 if(list) {
                   for(i = 0; i < list.length; i++) {
-                    list[i](err, result);
+                    list[i](new_err, new_result);
                   }
                 }
               });

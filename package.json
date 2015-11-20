@@ -1,6 +1,6 @@
 {
   "name": "cache-helpers",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "caching convenience functions",
   "keywords": [
     "caching"
